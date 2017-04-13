@@ -1,7 +1,17 @@
+import math
 from neopixel import *
+import netinfo
 from pysnmp.hlapi import *
+import random
 import threading
 import time
+
+router_ip = ''
+for route in netinfo.get_routes() :
+    if route['dest'] == '0.0.0.0' :
+	router_ip = route['gateway']
+
+print 'router is at ' + router_ip
 
 # LED strip configuration:
 LED_COUNT      = 24      # Number of LED pixels.
@@ -12,7 +22,7 @@ LED_BRIGHTNESS = 255     # Set to 0 for darkest and 255 for brightest
 LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
 
 BW_SAMPLES     = 5       # Number of bandwidth samples to keep
-BW_FREQUENCY   = 3       # Delay in seconds between polls of bandwidth data
+BW_FREQUENCY   = 2       # Delay in seconds between polls of bandwidth data
 
 def wheel(pos):
     """Generate rainbow colors across 0-255 positions."""
@@ -25,13 +35,12 @@ def wheel(pos):
         pos -= 170
         return Color(0, pos * 3, 255 - pos * 3)
 
+tx = 0.0
+tx_delta = 0.0
+rx = 0.0
+rx_delta = 0.0
 
-upstream = [0]*(BW_SAMPLES)
-downstream = [0]*(BW_SAMPLES)
-
-display = 0.0
-
-class GetDataBackground(threading.Thread):   
+class GetDataBackground(threading.Thread):
    def run(self):
       while 1 :
         # get the time before we query the router
@@ -47,9 +56,10 @@ class GetDataBackground(threading.Thread):
 
 
 def GetData():
+    global router_ip
     cmd = getCmd(SnmpEngine(),
          CommunityData('public', mpModel=1),
-         UdpTransportTarget(('192.168.2.1', 161)),
+         UdpTransportTarget((router_ip, 161)),
          ContextData(),
          ObjectType(ObjectIdentity('IF-MIB', 'ifHCInOctets', 2)),
          ObjectType(ObjectIdentity('IF-MIB', 'ifHCOutOctets', 2)))
@@ -62,11 +72,28 @@ def GetData():
         print('%s at %s' % (errorStatus.prettyPrint(),
             errorIndex and varBinds[int(errorIndex) - 1][0] or '?'))
     else:
-        downstream.append(int(varBinds[0][1]))
-        upstream.append(int(varBinds[1][1]))
-        
-        if len(downstream) > BW_SAMPLES : downstream.pop(0)
-        if len(upstream) > BW_SAMPLES : upstream.pop(0)
+        print('snmp response')
+        global rx
+        global rx_delta
+        global tx
+        global tx_delta
+
+        rx_new = float(varBinds[0][1] / 1024 / 1024)
+        tx_new = float(varBinds[1][1] / 1024 / 1024)
+
+        #rx_delta = rx_new - rx
+        rx_delta = random.randint(0, 70)
+        tx_delta = tx_new - tx
+
+        if rx == 0 : rx_delta = 0
+        if tx == 0 : tx_delta = 0
+
+        rx = rx_new
+        tx = tx_new
+
+        print("rx:            " + str(rx))
+        print("rx_delta:      " + str(rx_delta))
+        print("")
 
 # Main program logic follows:
 if __name__ == '__main__':
@@ -79,21 +106,34 @@ if __name__ == '__main__':
     # Intialize the library (must be called once before other functions).
     strip.begin()
 
+    spin_speed = 0.0
+    spin = 0.0
+
+    t = .05
+
     while True:
-        delta = downstream[len(downstream) - 1] - downstream[len(downstream) - 2]
 
-        display += (display - delta) * .1
+        scaled = rx_delta / 10.0
+        if spin_speed < scaled : spin_speed = spin_speed + (scaled - spin_speed) * .30 * t
+        if spin_speed > scaled : spin_speed = spin_speed + (scaled - spin_speed) * .20 * t
+        if spin_speed < 0 : spin_speed = 0
 
-        print(delta)
-        print(display)
-        
+        #print("scaled:        " + str(scaled))
+        #print("spin_speed:    " + str(spin_speed))
+
+        spin = spin + spin_speed
+
         for i in range(strip.numPixels()) :
-            
-            #if display / 8000 > i :
-            strip.setPixelColor(i, wheel(i & 255))
-          #  else :
-          #      strip.setPixelColor(i, Color(0, 0, 0))
+            dist = math.sin((i + spin) / 24.0 * 3.1416 * 2.0)
+            if dist < 0 : dist = 0
+            dist = dist * dist * dist
+            strip.setPixelColorRGB(i, int(0xff * dist), 0x00, 0x00);
+
+            #if i == int(spin) % LED_COUNT :
+            #    strip.setPixelColor(i, wheel(i & 255))
+            #else :
+            #    strip.setPixelColor(i, Color(0, 0, 0))
 
         strip.show()
-        
-        time.sleep(1)
+
+        time.sleep(t)

@@ -34,7 +34,7 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 class WebserverBackground(threading.Thread):   
    def run(self):
-      server = ThreadedHTTPServer(('localhost', 8080), Handler)
+      server = ThreadedHTTPServer(('', 8080), Handler)
       server.serve_forever()
 
 if __name__ == '__main__':
