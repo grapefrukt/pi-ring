@@ -1,3 +1,4 @@
+import colorsys
 import math
 from neopixel import *
 import netinfo
@@ -23,6 +24,9 @@ LED_INVERT     = False   # True to invert the signal (when using NPN transistor 
 
 BW_SAMPLES     = 5       # Number of bandwidth samples to keep
 BW_FREQUENCY   = 2       # Delay in seconds between polls of bandwidth data
+
+def clamp(val, minval, maxval):
+    return max(min(val, maxval), minval)
 
 def wheel(pos):
     """Generate rainbow colors across 0-255 positions."""
@@ -81,8 +85,8 @@ def GetData():
         rx_new = float(varBinds[0][1] / 1024 / 1024)
         tx_new = float(varBinds[1][1] / 1024 / 1024)
 
-        #rx_delta = rx_new - rx
-        rx_delta = random.randint(0, 70)
+        rx_delta = rx_new - rx
+        #rx_delta = random.randint(0, 70)
         tx_delta = tx_new - tx
 
         if rx == 0 : rx_delta = 0
@@ -118,22 +122,22 @@ if __name__ == '__main__':
         if spin_speed > scaled : spin_speed = spin_speed + (scaled - spin_speed) * .20 * t
         if spin_speed < 0 : spin_speed = 0
 
-        #print("scaled:        " + str(scaled))
-        #print("spin_speed:    " + str(spin_speed))
-
         spin = spin + spin_speed
 
-        for i in range(strip.numPixels()) :
-            dist = math.sin((i + spin) / 24.0 * 3.1416 * 2.0)
-            if dist < 0 : dist = 0
-            dist = dist * dist * dist
-            strip.setPixelColorRGB(i, int(0xff * dist), 0x00, 0x00);
+        # vary brightness to keep things moving when no traffic
+        brightness = math.sin(time.time() * 1.3) / 2.0 + .5 + spin_speed * .5
+        brightness = clamp(brightness, 0, 1)
+        # set a minimum brightness above zero
+        brightness = brightness * .9 + .1
 
-            #if i == int(spin) % LED_COUNT :
-            #    strip.setPixelColor(i, wheel(i & 255))
-            #else :
-            #    strip.setPixelColor(i, Color(0, 0, 0))
+        for i in range(strip.numPixels()) :
+            dist = math.sin((i - spin) / 24.0 * 3.1416 * 2.0) / 2.0 + .5
+            dist = dist * 4 - 3
+            dist = clamp(dist, 0, 1)
+            dist = dist * dist * dist * dist * dist
+
+            rgb = colorsys.hsv_to_rgb(((i - spin) / 240) % 1.0, 1.0, clamp(dist, 0, brightness))
+            strip.setPixelColorRGB(i, int(rgb[0] * 0xff), int(rgb[1] * 0xff), int(rgb[2] * 0xff))
 
         strip.show()
-
         time.sleep(t)
