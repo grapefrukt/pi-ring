@@ -19,16 +19,25 @@ LED_INVERT     = False   # True to invert the signal (when using NPN transistor 
 BW_SAMPLES     = 5       # Number of bandwidth samples to keep
 BW_FREQUENCY   = 2       # Delay in seconds between polls of bandwidth data
 
+GAMMA          = .6
+MAX_BRIGHTNESS = .85
+
 def clamp(val, minval, maxval):
     return max(min(val, maxval), minval)
+    
+def gamma(original) :
+    return math.pow((original), (1.0 / GAMMA))
+    
+def convert(input) :
+    return int(gamma(input) * MAX_BRIGHTNESS * 0xff)
 
 # Define functions which animate LEDs in various ways.
 def colorWipe(strip, color, wait_ms=50):
-	"""Wipe color across display a pixel at a time."""
-	for i in range(strip.numPixels()):
-		strip.setPixelColor(i, color)
-		strip.show()
-		time.sleep(wait_ms/1000.0)
+    """Wipe color across display a pixel at a time."""
+    for i in range(strip.numPixels()):
+        strip.setPixelColor(i, color)
+        strip.show()
+        time.sleep(wait_ms/1000.0)
 
 class GetDataBackground(threading.Thread):
    def run(self):
