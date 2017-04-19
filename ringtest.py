@@ -61,8 +61,7 @@ def GetData():
          CommunityData('public', mpModel=1),
          UdpTransportTarget((router_ip, 161)),
          ContextData(),
-         ObjectType(ObjectIdentity('IF-MIB', 'ifHCInOctets', 2)),
-         ObjectType(ObjectIdentity('IF-MIB', 'ifHCOutOctets', 2)))
+         ObjectType(ObjectIdentity('IF-MIB', 'ifHCInOctets', 2)))
 
     errorIndication, errorStatus, errorIndex, varBinds = next(cmd)
 
@@ -72,24 +71,13 @@ def GetData():
         print('%s at %s' % (errorStatus.prettyPrint(),
             errorIndex and varBinds[int(errorIndex) - 1][0] or '?'))
     else:
-        #print('snmp response')
         global rx
         global rx_delta
-        global tx
-        global tx_delta
-
         rx_new = float(varBinds[0][1] / 1024 / 1024)
-        tx_new = float(varBinds[1][1] / 1024 / 1024)
-
         rx_delta = rx_new - rx
         #rx_delta = random.randint(0, 70)
-        tx_delta = tx_new - tx
-
         if rx == 0 : rx_delta = 0
-        if tx == 0 : tx_delta = 0
-
         rx = rx_new
-        tx = tx_new
 
 # Main program logic follows:
 if __name__ == '__main__':
@@ -108,8 +96,6 @@ if __name__ == '__main__':
     # make a wipe while we wait for a router ip
     colorWipe(strip, Color(0, 64, 0), wipetime)
 
-    tx = 0.0
-    tx_delta = 0.0
     rx = 0.0
     rx_delta = 0.0
 
