@@ -21,6 +21,7 @@ BW_FREQUENCY   = 2       # Delay in seconds between polls of bandwidth data
 
 GAMMA          = .6
 MAX_BRIGHTNESS = .85
+MAX_BANDWIDTH  = 25.0
 
 def clamp(val, minval, maxval):
     return max(min(val, maxval), minval)
@@ -137,9 +138,9 @@ if __name__ == '__main__':
     spin_speed = 0.0
     spin = 0.0
 
+    # then, we run this forever
     while True:
-
-        scaled = rx_delta / 10.0
+        scaled = rx_delta / MAX_BANDWIDTH
         if spin_speed < scaled : spin_speed = spin_speed + (scaled - spin_speed) * .30 * t
         if spin_speed > scaled : spin_speed = spin_speed + (scaled - spin_speed) * .20 * t
         if spin_speed < 0 : spin_speed = 0
