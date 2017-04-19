@@ -154,12 +154,10 @@ if __name__ == '__main__':
         
         for i in range(strip.numPixels()) :
             dist = math.sin((i - spin) / 24.0 * 3.1416 * 2.0) / 2.0 + .5
-            dist = dist * 4 - 3
-            dist = clamp(dist, 0, 1)
-            dist = dist * dist * dist * dist * dist
-
-            rgb = colorsys.hsv_to_rgb(abs((spin+i) / 240.0) % 1.0, 1.0, clamp(dist, 0, brightness))
-            strip.setPixelColorRGB(i, int(rgb[1] * 0xff), int(rgb[0] * 0xff), int(rgb[2] * 0xff))
+            dist = math.pow(dist, 8)
+            
+            rgb = colorsys.hsv_to_rgb(abs((spin) / 240.0 + i / 120.0) % 1.0, 1.0, clamp(dist, 0, brightness))
+            strip.setPixelColorRGB(i, convert(rgb[1]), convert(rgb[0]), convert(rgb[2]))
 
         strip.show()
         time.sleep(t)
