@@ -2,6 +2,7 @@ import colorsys
 import math
 from neopixel import *
 import netinfo
+import os
 from pysnmp.hlapi import *
 import random
 import threading
@@ -89,7 +90,10 @@ if __name__ == '__main__':
     # timestep size (in seconds)
     t = .05
     wipetime = t * .5 * 1000
-
+    
+    # sets the process to run at a higher priority
+    os.nice(-10)
+    
     # Create NeoPixel object with appropriate configuration.
     strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
     # Intialize the library (must be called once before other functions).
