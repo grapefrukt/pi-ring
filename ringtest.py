@@ -151,9 +151,7 @@ if __name__ == '__main__':
         brightness = math.sin(time.time() * 1.3) / 2.0 + .5 + spin_speed * .5
         # set a minimum brightness above zero
         brightness = brightness * .9 + .1
-        # set the maximum brightness, will go as low as .004
-        brightness = clamp(brightness, 0, 1)
-
+        
         for i in range(strip.numPixels()) :
             dist = math.sin((i - spin) / 24.0 * 3.1416 * 2.0) / 2.0 + .5
             dist = dist * 4 - 3
