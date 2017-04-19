@@ -90,10 +90,6 @@ def GetData():
         rx = rx_new
         tx = tx_new
 
-        #print("rx:            " + str(rx))
-        #print("rx_delta:      " + str(rx_delta))
-        #print("")
-
 # Main program logic follows:
 if __name__ == '__main__':
     # timestep size (in seconds)
@@ -107,7 +103,8 @@ if __name__ == '__main__':
     strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
     # Intialize the library (must be called once before other functions).
     strip.begin()
-
+    
+    # make a wipe while we wait for a router ip
     colorWipe(strip, Color(0, 64, 0), wipetime)
 
     tx = 0.0
@@ -121,12 +118,14 @@ if __name__ == '__main__':
 
     print 'router is at ' + router_ip
 
+    # and another wipe before starting the polling thread
     colorWipe(strip, Color(64, 0, 0), wipetime)
 
     thread = GetDataBackground()
     thread.daemon = True
     thread.start()
-
+    
+    # then alternate black and blue wipes until we get a delta from the thread
     i = 0
     while rx == 0 or i % 2 == 1:
         i = i + 1
